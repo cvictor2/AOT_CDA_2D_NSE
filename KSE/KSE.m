@@ -128,6 +128,7 @@ end
 tol = .1;
 reset_times = [];
 
+% AOT (nudging) solution
 aot_hat = zeros(size(u_hat));
 aot_hat(trunc_index) = u_hat(trunc_index);
 
@@ -141,13 +142,20 @@ for ti = 1:num_timesteps
 
     u_hat = E.*(u_hat - dt*nonlin_term);
   
+
+    %observe previous timestep for nudging
     aot_obs = u_hat_old;
-    % aot_obs(trunc_index_comp) = 0;
-    Ihumv = aot_obs - aot_hat;
-    Ihumv(trunc_index_comp) = 0;
-
-
+    %Zero out unobserved modes on observation data
     aot_obs(trunc_index_comp) = 0;
+
+    % aot_obs(trunc_index_comp) = 0;
+
+    %compute nudging feedback term I_h(u-v)
+    Ihumv = aot_obs - aot_hat;
+    %Zero out all unobserved modes
+    Ihumv(trunc_index_comp) = 0;
+    
+
 
     nonlin_aot = (1i*k/2).*fft(real(ifft(aot_hat.*dealias_mask)).^2);
     aot_hat = E.*(aot_hat - dt*nonlin_aot + dt*mu*(Ihumv));
